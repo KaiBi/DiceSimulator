@@ -1,0 +1,8 @@
+.mainStack {
+	-fx-background-color: #000;
+	-fx-min-width: 480px;
+	-fx-pref-width: 480px;
+	-fx-max-width: 9999999px;
+	-fx-min-height: 800px;
+	-fx-max-height: 800px;
+}

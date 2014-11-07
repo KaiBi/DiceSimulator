@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxWidth="1.7976931348623157E308" minHeight="800.0" minWidth="480.0" styleClass="mainVBox" stylesheets="@stats.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.bizik.kai.dicesimulator.gui.main.stats.StatsPresenter">
+	<children>
+		<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="100.0" maxWidth="1.7976931348623157E308" minHeight="100.0" minWidth="480.0" styleClass="mainLabel" text="RPGDiceSim" textAlignment="CENTER">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding></Label>
+		<HBox maxHeight="150.0" maxWidth="1.7976931348623157E308" minHeight="150.0" minWidth="480.0" spacing="5.0">
+			<children>
+            <VBox styleClass="clickable_border">
+               <children>
+                  <Label fx:id="dieKindLabel" alignment="CENTER" maxHeight="120.0" maxWidth="1.7976931348623157E308" minHeight="120.0" prefHeight="120.0" prefWidth="140.0" styleClass="biglabel" text="100" textAlignment="CENTER">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Label alignment="CENTER" maxHeight="20.0" maxWidth="1.7976931348623157E308" minHeight="20.0" minWidth="140.0" text="Anzahl Würfelseiten" textAlignment="CENTER" />
+               </children>
+            </VBox>
+            <AnchorPane>
+               <children>
+						<Label fx:id="dieKindStatsLabel" text="Durchschnittliches Ergebnis:" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+			</children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+		</HBox>
+      <HBox layoutX="12.0" layoutY="62.0" maxHeight="150.0" maxWidth="1.7976931348623157E308" minHeight="150.0" minWidth="480.0" spacing="5.0">
+         <children>
+            <VBox styleClass="clickable_border">
+               <children>
+                  <Label fx:id="dieCountLabel" alignment="CENTER" maxHeight="120.0" maxWidth="1.7976931348623157E308" minHeight="120.0" prefHeight="120.0" prefWidth="140.0" styleClass="biglabel" text="10" textAlignment="CENTER">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Label alignment="CENTER" maxHeight="20.0" maxWidth="1.7976931348623157E308" minHeight="20.0" minWidth="140.0" text="Anzahl Würfel" textAlignment="CENTER" />
+               </children>
+            </VBox>
+            <AnchorPane>
+               <children>
+                  <Label fx:id="dieCountStatsLabel" text="Durchschnittliches Ergebnis:" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </HBox>
+      <HBox layoutX="12.0" layoutY="212.0" maxHeight="150.0" maxWidth="1.7976931348623157E308" minHeight="150.0" minWidth="480.0" spacing="5.0">
+         <children>
+            <VBox styleClass="clickable_border">
+               <children>
+                  <Label fx:id="difficultyLabel" alignment="CENTER" maxHeight="120.0" maxWidth="1.7976931348623157E308" minHeight="120.0" prefHeight="120.0" prefWidth="140.0" styleClass="biglabel" text="10" textAlignment="CENTER">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Label alignment="CENTER" maxHeight="20.0" maxWidth="1.7976931348623157E308" minHeight="20.0" minWidth="140.0" text="Schwierigkeitsgrad" textAlignment="CENTER" />
+               </children>
+            </VBox>
+            <AnchorPane>
+               <children>
+                  <Label fx:id="difficultyStatsLabel" text="Durchschnittliches Ergebnis:" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </HBox>
+      <HBox layoutX="12.0" layoutY="512.0" maxHeight="150.0" maxWidth="1.7976931348623157E308" minHeight="150.0" minWidth="480.0" spacing="5.0">
+         <children>
+            <VBox styleClass="clickable_border">
+               <children>
+                  <Label fx:id="successesLabel" alignment="CENTER" maxHeight="120.0" maxWidth="1.7976931348623157E308" minHeight="120.0" prefHeight="120.0" prefWidth="140.0" styleClass="biglabel" text="10" textAlignment="CENTER">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Label alignment="CENTER" maxHeight="20.0" maxWidth="1.7976931348623157E308" minHeight="20.0" minWidth="140.0" text="Anzahl Erfolge" textAlignment="CENTER" />
+               </children>
+            </VBox>
+            <AnchorPane>
+               <children>
+                  <Label fx:id="successesStatsLabel" text="Durchschnittliches Ergebnis:" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </HBox>
+		<GridPane maxHeight="100.0" maxWidth="1.7976931348623157E308" minHeight="100.0" minWidth="480.0">
+			<children>
+						<Button fx:id="simRunningButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#toggleSimulation" text="Läuft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" GridPane.rowIndex="1">
+               <styleClass>
+                  <String fx:value="simulatorButton" />
+                  <String fx:value="simRunningButton" />
+               </styleClass>
+            </Button>
+						<Button fx:id="simStoppedButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#toggleSimulation" text="Angehalten" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" GridPane.columnIndex="3" GridPane.rowIndex="1">
+               <styleClass>
+                  <String fx:value="simulatorButton" />
+                  <String fx:value="simStoppedButton" />
+                  <String fx:value="simulatorButtonSelected" />
+               </styleClass>
+            </Button>
+      				<Label maxHeight="50.0" maxWidth="1.7976931348623157E308" minHeight="50.0" minWidth="480.0" styleClass="simulatorLabel" text="Simulator" GridPane.columnSpan="4" />
+            <Button fx:id="simStartingButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#toggleSimulation" text="Startet" GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <styleClass>
+                  <String fx:value="simulatorButton" />
+                  <String fx:value="simStartingButton" />
+               </styleClass>
+            </Button>
+            <Button fx:id="simStoppingButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#toggleSimulation" text="Stoppt" GridPane.columnIndex="2" GridPane.rowIndex="1">
+               <styleClass>
+                  <String fx:value="simulatorButton" />
+                  <String fx:value="simStoppingButton" />
+               </styleClass>
+            </Button>
+			</children>
+         <columnConstraints>
+            <ColumnConstraints percentWidth="25.0" />
+            <ColumnConstraints percentWidth="25.0" />
+            <ColumnConstraints percentWidth="25.0" />
+            <ColumnConstraints percentWidth="25.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints percentHeight="33.0" />
+            <RowConstraints percentHeight="66.0" />
+         </rowConstraints>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" />
+         </padding>
+		</GridPane>
+	</children>
+</VBox>
