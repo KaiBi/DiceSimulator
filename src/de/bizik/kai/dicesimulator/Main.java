@@ -23,7 +23,7 @@ public class Main extends Application {
 	@Override
 	public void stop() throws Exception {
 		Simulator.INSTANCE.stopSimulationSync();
-		Model.getModel().save();
+		Model.getModel().saveToFile();
 	}
 	
 }

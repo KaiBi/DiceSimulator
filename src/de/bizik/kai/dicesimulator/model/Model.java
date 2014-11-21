@@ -4,157 +4,161 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
+import de.bizik.kai.dicesimulator.model.statistics.Statistics;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(namespace = "de.bizik.kai.dicesim")
-public class Model {
-	
-	private static final int[] INITIALDIEKINDS = new int[] {2, 4, 6, 8, 12, 20, 100};
-	private static final long AUTOSAVEINTERVAL = 300000;
+public final class Model implements ModelElement {
+
+	private static final int[] INITIALLY_ALLOWED_SIDES = new int[] { 2, 4, 6, 8, 12, 20, 100 };
+	private static final long AUTOSAVE_INTERVAL_IN_MILLIS = 300000;
 	private static final String DATAFILENAME = "data.gz";
-	
-	@XmlElement(name="NSidedDice")
-	private final Map<Integer, NSidedDie> dice = new HashMap<Integer, NSidedDie>();
-	
-	// lazy thread-safe singleton
+
+	@XmlTransient
+	private static Consumer<String> logger = System.err::println;
+	@XmlTransient
+	private static JAXBContext jaxbcontext = null;
+
+	@XmlTransient
+	private final Statistics statistics;
+	private final Map<Integer, DieKind> dieKindFromItsSidesIndex = new HashMap<Integer, DieKind>();
+
+	private long timestampOfLastSaveInMillis = 0;
+
 	private static final class InstanceHolder {
-		static final Model INSTANCE = Model.load();
+		static Model INSTANCE = null;
 	}
-	
+
+	private Model() {
+		statistics = new Statistics(this);
+		for (int sides : INITIALLY_ALLOWED_SIDES)
+			dieKindFromItsSidesIndex.put(sides, new DieKind(sides));
+	}
+
 	public static Model getModel() {
+		if (InstanceHolder.INSTANCE == null) {
+			InstanceHolder.INSTANCE = Model.load();
+		}
 		return InstanceHolder.INSTANCE;
 	}
 	
-	private Model() {
-		for (int i : INITIALDIEKINDS)
-			dice.put(i, new NSidedDie(i));
+	@Override
+	public void accept(ModelVisitor visitor) {
+		visitor.visit(this);
 	}
 	
-	private static JAXBContext jaxbcontext = null;
-	
-	private static Model load() {
-		Model m = loadFromFile();
-		if (m == null) {
-			System.err.println("Could not load from file " + DATAFILENAME + ". Will try to use the shipped set.");
-			m = loadFromProvided();
-		}
-		if (m == null) {
-			System.err.println("Could not load the shipped set of data. Will use an empty standard model.");
-			m = new Model();
-		}
-		m.updateStatistics();
-		return m;
+	@Override
+	public Collection<? extends ModelElement> getChildren() {
+		return getDieKinds();
 	}
 	
-	private static Model loadFromFile() {
-		File f = new File("data.gz");
-		Model m = null;
-		if (f.exists() && f.canRead()) {
-			try {
-				if (jaxbcontext == null)
-					jaxbcontext = JAXBContext.newInstance(Model.class);
-				GZIPInputStream in = new GZIPInputStream(new FileInputStream(f));
-				m = (Model) jaxbcontext.createUnmarshaller().unmarshal(in);
-				in.close();
-			} catch (IOException | JAXBException e) {
-				e.printStackTrace();
-				m = null;
-			}
-		}
-		return m;
-	}
-	
-	private static Model loadFromProvided() {
-		Model m = null;
-		try {
-			if (jaxbcontext == null)
-				jaxbcontext = JAXBContext.newInstance(Model.class);
-			GZIPInputStream in = new GZIPInputStream(Model.class.getResourceAsStream(DATAFILENAME));
-			m = (Model) jaxbcontext.createUnmarshaller().unmarshal(in);
-			in.close();
-		} catch (IOException | JAXBException e) {
-			e.printStackTrace();
-			m = null;
-		} catch (NullPointerException e1) {
-			m = null;
-		}
-		return m;
-	}
-	
-	public void save() {
-		File f = new File("data.gz");
-		try {
-			f.createNewFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (!f.exists() || !f.canWrite()) {
-			System.err.println("File not writable. Aborting save operation.");
-			return;
-		}
-		try {
-			if (jaxbcontext == null)
-				jaxbcontext = JAXBContext.newInstance(Model.class);
-			GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(f));
-			jaxbcontext.createMarshaller().marshal(this, out);
-			out.close();
-			timeOfLastSave = System.currentTimeMillis();
-		} catch (JAXBException | IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private long timeOfLastSave = 0;
-	public void autosaveIfNecessary() {
-		if (System.currentTimeMillis() - timeOfLastSave > AUTOSAVEINTERVAL)
-			save();
-	}
-	
-	public NSidedDie getNSidedDie(int numSides) {
-		if (!dice.containsKey(numSides) && numSides > 1) {
-			dice.put(numSides, new NSidedDie(numSides));
-			updateAllowedDieKinds();
-		}
-		return dice.get(numSides);
+	public Statistics getStatistics() {
+		return statistics;
 	}
 
-	private ObjectProperty<int[]> allowedDieKindsProperty = new SimpleObjectProperty<int[]>();
-	public ReadOnlyObjectProperty<int[]> allowedDieKindsProperty() {
-		return allowedDieKindsProperty;
-	}
-	private void updateAllowedDieKinds() {
-		Collection<Integer> is = dice.keySet();
-		int[] dk = new int[is.size()];
-		int index = 0;
-		for (Integer i : is) {
-			dk[index++] = i;
-		}
-		Arrays.sort(dk);
-		allowedDieKindsProperty.set(dk);
+	public Collection<DieKind> getDieKinds() {
+		return Collections.unmodifiableCollection(dieKindFromItsSidesIndex.values());
 	}
 	
-	public void updateStatistics() {
-		for (NSidedDie d : dice.values()) {
-			d.updateStatistics();
-		}
-		updateOwnStatistics();
+	public DieKind getDieKind(int numberOfDieSides) {
+		return dieKindFromItsSidesIndex.get(numberOfDieSides);
 	}
 	
-	private void updateOwnStatistics() {
-		updateAllowedDieKinds();
+	public int getNextDieKindsNumberOfSides(int currentDieKindsNumberOfSides) {
+		List<Integer> validSides = new ArrayList<Integer>(dieKindFromItsSidesIndex.keySet());
+		validSides.sort(Integer::compare);
+		int index = validSides.indexOf(currentDieKindsNumberOfSides);
+		if (index < validSides.size() - 1)
+			index++;
+		return dieKindFromItsSidesIndex.get(validSides.get(index)).getNumberOfDieSides();
 	}
+	
+	public int getPreviousDieKindsNumberOfSides(int currentDieKindsNumberOfSides) {
+		List<Integer> validSides = new ArrayList<Integer>(dieKindFromItsSidesIndex.keySet());
+		validSides.sort(Integer::compare);
+		int index = validSides.indexOf(currentDieKindsNumberOfSides);
+		if (index > 0)
+			index--;
+		return dieKindFromItsSidesIndex.get(validSides.get(index)).getNumberOfDieSides();
+	}
+
+	public static void setLogger(Consumer<String> logger) {
+		Model.logger = logger;
+	}
+	
+	public void autosaveIfIntervalPassed() {
+		if (System.currentTimeMillis() - timestampOfLastSaveInMillis > AUTOSAVE_INTERVAL_IN_MILLIS)
+			try {
+				saveToFile();
+			} catch (IOException | JAXBException e) {
+				logger.accept(e.toString());
+			}
+	}
+	
+	public void saveToFile() throws IOException, JAXBException {
+		File f = new File(DATAFILENAME);
+		f.createNewFile();
+		GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(f));
+		getJAXBContext().createMarshaller().marshal(this, out);
+		out.close();
+		timestampOfLastSaveInMillis = System.currentTimeMillis();
+	}
+	
+	private static JAXBContext getJAXBContext() throws JAXBException {
+		if (jaxbcontext == null)
+			jaxbcontext = JAXBContext.newInstance(Model.class);
+		return jaxbcontext;
+	}
+	
+	private static Model load() {
+		Model model = null;
+		try {
+			model = loadFromFilesystem();
+		} catch (IOException | JAXBException e) {
+			logger.accept("Could not load a saved model from the filesystem.\nWill try to load from the Jar-File.");
+			try {
+				model = loadFromJar();
+			} catch (IOException | JAXBException | NullPointerException e1) {
+				logger.accept("Could not load a saved model from the JAR-file.\n Will use a standard model.");
+				model = new Model();
+			}
+		}
+		return model;
+	}
+
+	private static Model loadFromFilesystem() throws IOException, JAXBException {
+		File file = new File(DATAFILENAME);
+		if (jaxbcontext == null)
+			jaxbcontext = JAXBContext.newInstance(Model.class);
+		GZIPInputStream in = new GZIPInputStream(new FileInputStream(file));
+		Model model = (Model) jaxbcontext.createUnmarshaller().unmarshal(in);
+		in.close();
+		return model;
+	}
+
+	private static Model loadFromJar() throws IOException, JAXBException, NullPointerException {
+		Model model = null;
+		GZIPInputStream in = new GZIPInputStream(Model.class.getResourceAsStream(DATAFILENAME));
+		model = (Model) getJAXBContext().createUnmarshaller().unmarshal(in);
+		in.close();
+		return model;
+	}
+
 }

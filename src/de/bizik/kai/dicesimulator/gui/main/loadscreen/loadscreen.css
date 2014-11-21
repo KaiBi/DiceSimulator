@@ -1,0 +1,12 @@
+Label {
+	-fx-font-family: "Fira Sans";
+	-fx-text-fill: #37f922;
+}
+
+.mainPane {
+	-fx-background-color: #000;
+}
+
+.progressIndicator {
+	-fx-progress-color: #37f922;
+}

@@ -1,6 +1,5 @@
 package de.bizik.kai.dicesimulator.sim;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -8,100 +7,92 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import de.bizik.kai.dicesimulator.model.DieKind;
 import de.bizik.kai.dicesimulator.model.Model;
+import de.bizik.kai.dicesimulator.model.ModelVisitor;
 
 public class SimulationTask implements Runnable {
 
-	private static final int randomRollsPerSimulationStep = 1000000;
-	
-	public SimulationTask(ExecutorService exService, BooleanProperty isRunning) {
-		this.exService = exService;
-		this.isRunning = isRunning;
-	} 
-	
-	private final ExecutorService exService;
+	private static final int rollsPerIteration = 1000000;
+	private static final Map<DieKind, RerollStrategy> rerollStrategies = new HashMap<DieKind, RerollStrategy>();
+
+	private final ExecutorService executorService;
 	private final BooleanProperty isRunning;
-	
-	// uncomment all line comments for empirical benchmark of optimized vs. unoptimized rerolling
-//	private static long numRunsNormal = 0;
-//	private static long numRunsOpti = 0;
-//	private static long timeNormal = 0;
-//	private static long timeOpti = 0;
-//	private static boolean toggle = false;
-	
+	private final IntegerProperty iterationsCounter;
+	private final Model model;
+
+	public SimulationTask(ExecutorService exexutorService, BooleanProperty isRunning,
+			IntegerProperty iterationsCounter) {
+		this.executorService = exexutorService;
+		this.isRunning = isRunning;
+		this.iterationsCounter = iterationsCounter;
+		this.model = Model.getModel();
+	}
+
 	@Override
 	public void run() {
-		if (!isRunning.get())
-			isRunning.set(true);
-		Model model = Model.getModel();
-//		long starttime = System.currentTimeMillis();
-//		if (toggle)
-			Arrays.stream(model.allowedDieKindsProperty().get()).forEach((i) -> {
-				model.getNSidedDie(i).addNewResults(rollDiceOptimized(randomRollsPerSimulationStep, i));
-			});
-//		else
-//			Arrays.stream(model.allowedDieKindsProperty().get()).forEach((i) -> {
-//				model.getNSidedDie(i).addNewResults(rollDice(randomRollsPerSimulationStep, i));
-//			});
-		model.updateStatistics();
-		model.autosaveIfNecessary();
-//		long stoptime = System.currentTimeMillis();
-//		if (toggle) {
-//			numRunsOpti++;
-//			timeOpti += stoptime - starttime;
-//			double avgNormal = (double) timeNormal / numRunsNormal;
-//			double avgOpti = (double) timeOpti / numRunsOpti;
-//			double ratio = avgOpti / avgNormal;
-//			System.out.println("Normal: " + avgNormal + "\tOpti: " + avgOpti + "\tRatio: " + ratio);
-//		} else {
-//			numRunsNormal++;
-//			timeNormal += stoptime - starttime;
-//		}
-//		toggle = !toggle;
+		isRunning.set(true);
+		Map<DieKind, int[]> simulatedRolls = simulateDieRolls();
+		insertNewRollsIntoModel(simulatedRolls);
+		model.autosaveIfIntervalPassed();
+		iterationsCounter.set(iterationsCounter.get() + 1);
+		scheduleNextSimulationTaskOrStop();
+	}
+
+	private Map<DieKind, int[]> simulateDieRolls() {
+		Map<DieKind, int[]> rollsForAllDieKinds = new HashMap<DieKind, int[]>();
+		for (DieKind dk : model.getDieKinds()) {
+			RerollStrategy strategy = getRerollStrategy(dk);
+			int[] rolls = simulateDieRolls(rollsPerIteration, dk.getNumberOfDieSides(), strategy);
+			rollsForAllDieKinds.put(dk, rolls);
+		}
+		return rollsForAllDieKinds;
+	}
+
+	private void insertNewRollsIntoModel(Map<DieKind, int[]> simulatedRolls) {
+		simulatedRolls.keySet().stream().parallel().forEach((dieKind) -> {
+			ModelVisitor insertNewRollsVisitor = new InsertNewRollsVisitor(simulatedRolls.get(dieKind));
+			dieKind.accept(insertNewRollsVisitor);
+		});
+	}
+
+	private void scheduleNextSimulationTaskOrStop() {
 		try {
-			exService.execute(this);
+			executorService.execute(this);
 		} catch (RejectedExecutionException e) {
 			isRunning.set(false);
 		}
 	}
 
-//	private static int[] rollDice(int numDice, int numSides) {
-//		int[] results = new int[numDice];
-//		Arrays.fill(results, 0);
-//		for (int i = 0; i < numDice; i++)
-//			while (results[i] % numSides == 0)
-//				results[i] += ThreadLocalRandom.current().nextInt(1, numSides + 1);
-//		return results;
-//	}
-
-	private static int[] rollDiceOptimized(int numDice, int numSides) {
-		int[] results = new int[numDice];
-		Arrays.fill(results, 0);
-		if (!rerollTables.containsKey(numDice))
-			initRerollTable(numSides);
-		boolean[] reroll = rerollTables.get(numSides);
-		for (int i = 0; i < numDice; i++) {
-			while (results[i] < reroll.length) {
-				if (reroll[results[i]])
-					results[i] += ThreadLocalRandom.current().nextInt(1, numSides + 1);
-				else
-					break;
-			}
-			if (results[i] >= reroll.length) {
-				while (results[i] % numSides == 0)
-					results[i] += ThreadLocalRandom.current().nextInt(1, numSides + 1);
-			}
+	private static int[] simulateDieRolls(int numberOfDiceToRoll, int numberOfDieSides, RerollStrategy rerollStrategy) {
+		int[] results = new int[numberOfDiceToRoll];
+		int startingRoll = 0;
+		for (int i = 0; i < numberOfDiceToRoll; i++) {
+			results[i] = calculateRollResult(startingRoll, numberOfDieSides, rerollStrategy);
 		}
 		return results;
 	}
-	
-	private static final Map<Integer, boolean[]> rerollTables = new HashMap<Integer, boolean[]>();
-	private static void initRerollTable(Integer numSides) {
-		boolean[] table = new boolean[numSides * 10];
-		Arrays.fill(table, false);
-		for (int i = 0; i < table.length; i += numSides)
-			table[i] = true;
-		rerollTables.put(numSides, table);
+
+	private static RerollStrategy getRerollStrategy(DieKind dieKind) {
+		if (!rerollStrategies.containsKey(dieKind)) {
+			int dieSides = dieKind.getNumberOfDieSides();
+			RerollStrategy strategy = new CachedRerollStrategy(new BasicRerollStrategy(dieSides));
+			rerollStrategies.put(dieKind, strategy);
+		}
+		return rerollStrategies.get(dieKind);
 	}
-	
+
+	private static int calculateRollResult(int currentResult, int numberOfDieSides, RerollStrategy rerollStrategy) {
+		if (rerollStrategy.needsToBeRerolled(currentResult)) {
+			int newResult = currentResult + rollSingleDieOnce(numberOfDieSides);
+			return calculateRollResult(newResult, numberOfDieSides, rerollStrategy);
+		}
+		return currentResult;
+	}
+
+	private static int rollSingleDieOnce(int numberOfDieSides) {
+		return ThreadLocalRandom.current().nextInt(1, numberOfDieSides + 1);
+	}
+
 }

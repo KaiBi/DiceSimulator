@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<BorderPane fx:id="mainPane" maxHeight="800.0" maxWidth="1.7976931348623157E308" minHeight="800.0" minWidth="480.0" styleClass="mainPane" stylesheets="@loadscreen.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="de.bizik.kai.dicesimulator.gui.main.loadscreen.LoadScreenPresenter">
+   <center>
+      <ProgressIndicator maxHeight="100.0" maxWidth="100.0" minHeight="100.0" minWidth="100.0" prefHeight="100.0" prefWidth="100.0" styleClass="progressIndicator" BorderPane.alignment="CENTER" />
+   </center>
+   <bottom>
+      <Label text="Loading Previous Simulation Data" textAlignment="CENTER" BorderPane.alignment="CENTER">
+         <font>
+            <Font size="24.0" />
+         </font>
+         <BorderPane.margin>
+            <Insets bottom="100.0" />
+         </BorderPane.margin>
+      </Label>
+   </bottom>
+</BorderPane>

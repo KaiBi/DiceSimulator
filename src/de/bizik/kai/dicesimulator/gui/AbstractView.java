@@ -22,7 +22,8 @@ public abstract class AbstractView {
 	private String bundleName;
 	private Parent parent;
 	
-	public AbstractView() {}
+	public AbstractView() {
+	}
 
 	private void initLoader() {
 		if (loader == null) {
@@ -37,7 +38,8 @@ public abstract class AbstractView {
 			ResourceBundle rb = null;
 			try {
 				ResourceBundle.getBundle(bundleName);
-			} catch (MissingResourceException e) {};
+			} catch (MissingResourceException e) {
+			};
 			loader = new FXMLLoader(resource, rb);
 			loader.setBuilderFactory(new JavaFXBuilderFactory());
 			

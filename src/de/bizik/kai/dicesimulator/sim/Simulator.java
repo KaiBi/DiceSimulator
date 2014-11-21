@@ -4,37 +4,43 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
 
 public enum Simulator {
 	INSTANCE;
 
+	private ExecutorService executorService = null;
+	private ReadOnlyBooleanWrapper isRunning = new ReadOnlyBooleanWrapper(false);
+	private ReadOnlyIntegerWrapper simulationIterationsCounter = new ReadOnlyIntegerWrapper(0);
+
+	
 	public static Simulator getSimulator() {
 		return INSTANCE;
 	}
 	
-	private BooleanProperty isRunning = new SimpleBooleanProperty(false);
-	
 	public ReadOnlyBooleanProperty runningProperty() {
-		return isRunning;
+		return isRunning.getReadOnlyProperty();
+	}
+
+	public ReadOnlyIntegerProperty simulationIterationsCountProperty() {
+		return simulationIterationsCounter.getReadOnlyProperty();
 	}
 	
-	public ExecutorService execService = null;
-	
-	public void startSimulation() {
+	public void startSimulationAsync() {
 		new Thread(() -> startSimulationSync()).start();
 	}
 	
-	public void stopSimulation() {
+	public void stopSimulationAsync() {
 		new Thread(() -> stopSimulationSync()).start();
 	}
 	
 	public synchronized void startSimulationSync() {
 		if (!isRunning.get()) {
-			execService = Executors.newSingleThreadExecutor();
-			execService.execute(new SimulationTask(execService, isRunning));
+			executorService = Executors.newSingleThreadExecutor();
+			executorService.execute(new SimulationTask(executorService, isRunning, simulationIterationsCounter));
 		}
 	}
 	
@@ -42,12 +48,11 @@ public enum Simulator {
 		if (!isRunning.get())
 			return;
 		try {
-			// we might lose some results, but nothing serious
-			execService.shutdown();
-			execService.awaitTermination(30, TimeUnit.SECONDS);
-			execService.shutdownNow();
+			executorService.shutdown();
+			executorService.awaitTermination(30, TimeUnit.SECONDS);
+			executorService.shutdownNow();
 		} catch (InterruptedException e) {
-			execService.shutdownNow();
+			executorService.shutdownNow();
 			Thread.currentThread().interrupt();
 		}
 	}
